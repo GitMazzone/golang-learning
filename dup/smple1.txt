@@ -1,0 +1,10 @@
+duped 1
+duped 1
+not
+duped 1
+dp 
+not
+wow
+amazin
+should be 3 duped 1
+and 5 not bcus it counts other file

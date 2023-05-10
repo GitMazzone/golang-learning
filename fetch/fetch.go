@@ -3,35 +3,44 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
+	"time"
 )
 
 func main() {
+	start := time.Now()
+	channel := make(chan string)
+
 	for _, url := range os.Args[1:] {
-		if !strings.HasPrefix(url, "https://") {
-			url = "https://" + url
-		}
-
-		res, err := http.Get(url)
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Fetch error: %s", err)
-			os.Exit(1)
-		}
-
-		io.Copy(os.Stdout, res.Body)
-
-		// body, err := ioutil.ReadAll(res.Body)
-		// res.Body.Close()
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Fetch error reading: %s: %s", url, err)
-			os.Exit(1)
-		}
-
-		// fmt.Printf("%s", body)
-		fmt.Printf("Response when fetching URL %s: %s\n", url, res.Status)
+		go fetch(url, channel)
 	}
+
+	for range os.Args[1:] {
+		fmt.Println(<-channel)
+	}
+
+	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
+}
+
+func fetch(url string, channel chan<- string) {
+	start := time.Now()
+	res, err := http.Get(url)
+
+	if err != nil {
+		channel <- fmt.Sprint(err)
+		return
+	}
+
+	nbytes, err := io.Copy(ioutil.Discard, res.Body)
+	res.Body.Close()
+
+	if err != nil {
+		channel <- fmt.Sprintf("while reading %s: %v", url, err)
+		return
+	}
+
+	secs := time.Since(start).Seconds()
+	channel <- fmt.Sprintf("%.2fs %7d %s", secs, nbytes, url)
 }

@@ -14,7 +14,7 @@ func main() {
 	log.SetPrefix("Error @ golang-learning/greetings: ")
 	log.SetFlags(0)
 
-	message, error := greetings.Hello("")
+	message, error := greetings.Hello("Mike")
 
 	if error != nil {
 		log.Fatal(error)
